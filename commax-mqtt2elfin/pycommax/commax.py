@@ -4,121 +4,34 @@ import time
 import asyncio
 import telnetlib
 import threading
+import socket
 
 share_dir = '/share'
 config_dir = '/data'
 data_dir = '/pycommax'
-
-HA_TOPIC = 'homenet'
-STATE_TOPIC = HA_TOPIC + '/{}/{}/state'
-ELFIN_TOPIC = '401ho' #동_호
-ELFIN_SEND_TOPIC = ELFIN_TOPIC + '/send'
-
 
 def log(string):
     date = time.strftime('%Y-%m-%d %p %I:%M:%S', time.localtime(time.time()))
     print('[{}] {}'.format(date, string))
     return
 
-
-def checksum(input_hex):
-    try:
-        input_hex = input_hex[:14]
-        s1 = sum([int(input_hex[val], 16) for val in range(0, 14, 2)])
-        s2 = sum([int(input_hex[val + 1], 16) for val in range(0, 14, 2)])
-        s1 = s1 + int(s2 // 16)
-        s1 = s1 % 16
-        s2 = s2 % 16
-        return input_hex + format(s1, 'X') + format(s2, 'X')
-    except Exception as err:
-        log('[ERROR] checksum(): {}'.format(err))
-        return None
-
-def find_device(config):
-    with open(data_dir + '/commax_devinfo.json') as file:
-        dev_info = json.load(file)
-    statePrefix = {dev_info[name]['stateON'][:2]: name for name in dev_info if dev_info[name].get('stateON')}
-    device_num = {statePrefix[prefix]: 0 for prefix in statePrefix}
-    collect_data = {statePrefix[prefix]: set() for prefix in statePrefix}
-    target_time = time.time() + 20
-
-    def on_connect(client, userdata, flags, rc):
-        userdata = time.time() + 20
-        if rc == 0:
-            log("Connected to MQTT broker..")
-            log("Find devices for 20s..")
-            client.subscribe('ew11/#', 0)
-        else:
-            errcode = {1: 'Connection refused - incorrect protocol version',
-                       2: 'Connection refused - invalid client identifier',
-                       3: 'Connection refused - server unavailable',
-                       4: 'Connection refused - bad username or password',
-                       5: 'Connection refused - not authorised'}
-            log(errcode[rc])
-
-    def on_message(client, userdata, msg):
-        raw_data = msg.payload.hex().upper()
-        for k in range(0, len(raw_data), 16):
-            data = raw_data[k:k + 16]
-            #log(data)
-            if data == checksum(data) and data[:2] in statePrefix:
-                name = statePrefix[data[:2]]
-                collect_data[name].add(data)
-                if dev_info[name].get('stateNUM'):
-                    device_num[name] = max([device_num[name], int(data[int(dev_info[name]['stateNUM']) - 1])])
-                else:
-                    device_num[name] = 1
-
-    mqtt_client = mqtt.Client('mqtt2elfin-commax')
-    mqtt_client.username_pw_set(config['mqtt_id'], config['mqtt_password'])
-    mqtt_client.on_connect = on_connect
-    mqtt_client.on_message = on_message
-    mqtt_client.connect_async(config['mqtt_server'])
-    mqtt_client.user_data_set(target_time)
-    mqtt_client.loop_start()
-
-    while time.time() < target_time:
-        pass
-
-    mqtt_client.loop_stop()
-
-    log('다음의 데이터를 찾았습니다...')
-    log('======================================')
-
-    for name in collect_data:
-        collect_data[name] = sorted(collect_data[name])
-        dev_info[name]['Number'] = device_num[name]
-        log('DEVICE: {}'.format(name))
-        log('Packets: {}'.format(collect_data[name]))
-        log('-------------------')
-    log('======================================')
-    log('기기의 숫자만 변경하였습니다. 상태 패킷은 직접 수정하여야 합니다.')
-    with open(share_dir + '/commax_found_device.json', 'w', encoding='utf-8') as make_file:
-        json.dump(dev_info, make_file, indent="\t")
-        log('기기리스트 저장 중 : /share/commax_found_device.json')
-    return dev_info
-
-
-def do_work(config, device_list, option):
-    debug = config['DEBUG']
-    mqtt_log = config['mqtt_log']
-    elfin_log = config['elfin_log']
-    find_signal = config['save_unregistered_signal']
-
-    tsDong = option['tsDong']
-    tsHo = option['tsHo']
-
-    log('debug = '+ str(debug))
-    log('mqtt_log = '+ str(mqtt_log))
-    log('elfin_log = '+ str(elfin_log))
-    log('find_signal = '+ str(find_signal))
-
-    log('tsDong = '+ tsDong)
-    log('tsHo = '+ tsHo)
-
+def main(CONFIG, OPTION, device_list):
     def pad(value):
         value = int(value)
         return '0' + str(value) if value < 10 else str(value)
+
+    def checksum(input_hex):
+        try:
+            input_hex = input_hex[:14]
+            s1 = sum([int(input_hex[val], 16) for val in range(0, 14, 2)])
+            s2 = sum([int(input_hex[val + 1], 16) for val in range(0, 14, 2)])
+            s1 = s1 + int(s2 // 16)
+            s1 = s1 % 16
+            s2 = s2 % 16
+            return input_hex + format(s1, 'X') + format(s2, 'X')
+        except Exception as err:
+            log('[ERROR] checksum(): {}'.format(err))
+            return None
 
     def make_hex(k, input_hex, change):
         if input_hex:
@@ -130,6 +43,8 @@ def do_work(config, device_list, option):
         return checksum(input_hex)
 
     def make_hex_temp(k, curTemp, setTemp, state):  # 온도조절기 16자리 (8byte) hex 만들기
+        log("k = {}, curTemp = {}, setTemp = {}, state = {}".format(k, curTemp, setTemp, state))
+
         if state == 'OFF' or state == 'ON' or state == 'CHANGE':
             tmp_hex = device_list['Thermo'].get('command' + state)
             change = device_list['Thermo'].get('commandNUM')
@@ -185,40 +100,16 @@ def do_work(config, device_list, option):
 
         else:
             return None
-    
-
-    DEVICE_LISTS = {}
-    for name in device_list:
-        log('[DC] device_list > name = ' + name)
-        device_info = make_device_info(name, device_list[name])
-        if device_info:
-            DEVICE_LISTS[name] = device_info
-
-    prefix_list = {}
-    log('----------------------')
-    log('등록된 기기 목록 DEVICE_LISTS')
-    log('----------------------')
-    for name in DEVICE_LISTS:
-        state = DEVICE_LISTS[name][1].get('stateON')
-        if state:
-            prefix = state[0][:2] if isinstance(state, list) else state[:2]
-            prefix_list[prefix] = name
-        log('{}: {}'.format(name, DEVICE_LISTS[name]))
-    log('----------------------')
-
-    HOMESTATE = {}
-    QUEUE = []
-    COLLECTDATA = {'cond': find_signal, 'data': set(), 'EVtime': time.time(), 'LastRecv': time.time_ns()}
-    if find_signal:
-        log('[LOG] 신호를 수집 중..')
 
     async def recv_from_HA(topics, value):
-        device = topics[1][:-1]
         if mqtt_log:
             log('[LOG] HA ->> : {} -> {}'.format('/'.join(topics), value))
 
-        device = device.split('_')[1]
-        log('[DC] device = '+ device)
+        #device = device.split('_')[1]
+        # 호를 제거한다.
+        topics[1] = topics[1].replace(tsHo + '_', '')
+
+        device = topics[1][:-1]
 
         if device in DEVICE_LISTS:
             key = topics[1] + topics[2]
@@ -226,6 +117,8 @@ def do_work(config, device_list, option):
             idx = int(num)
             cur_state = HOMESTATE.get(key)
             value = 'ON' if value == 'heat' else value.upper()
+
+            log('[DC] device = {}, key = {}, num = {}, idx = {}, cur_state = {}, vlaue = {}'.format(device, key, num, idx, cur_state, value))
 
             if cur_state:
                 # PASS
@@ -236,6 +129,8 @@ def do_work(config, device_list, option):
                     if device == 'Thermo':
                         curTemp = HOMESTATE.get(topics[1] + 'curTemp')
                         setTemp = HOMESTATE.get(topics[1] + 'setTemp')
+
+                        log('[DC] device = {}, curTemp = {}, setTemp = {}, topics[1] = {}, topics[2] = {}'.format(device, curTemp, setTemp, topics[1], topics[2]))
 
                         if topics[2] == 'power':
                             sendcmd = make_hex_temp(idx - 1, curTemp, setTemp, value)
@@ -248,17 +143,21 @@ def do_work(config, device_list, option):
 
                         elif topics[2] == 'setTemp':
                             value = int(float(value))
-                            if value == int(setTemp):
+                            # PASS
+                            if 'value' == int(setTemp):
                                 if debug:
                                     log('[DEBUG] {} is already set: {}'.format(topics[1], value))
                             else:
                                 setTemp = value
                                 sendcmd = make_hex_temp(idx - 1, curTemp, setTemp, 'CHANGE')
                                 recvcmd = [make_hex_temp(idx - 1, curTemp, setTemp, 'stateON')]
+
                                 if sendcmd:
                                     QUEUE.append({'sendcmd': sendcmd, 'recvcmd': recvcmd, 'count': 1})
                                     if debug:
                                         log('[DEBUG] Queued ::: sendcmd: {}, recvcmd: {}'.format(sendcmd, recvcmd))
+                                else:
+                                    log ('[DC] sendcmd = {}'.format(sendcmd))
 
                     elif device == 'Fan':
                         if topics[2] == 'power':
@@ -287,13 +186,13 @@ def do_work(config, device_list, option):
                                 log('[DEBUG] Queued ::: sendcmd: {}, recvcmd: {}'.format(sendcmd, recvcmd))
                         else:
                             if debug:
-                                log('[DEBUG] There is no command for {}'.format('/'.join(topics)))
+                                log('[DEBUG] No sendcmd for {}'.format('/'.join(topics)))
             else:
                 if debug:
                     log('[DEBUG] There is no command about {}'.format('/'.join(topics)))
         else:
             if debug:
-                log('[DEBUG] There is no command for {}'.format('/'.join(topics)))
+                log('[DEBUG] Not found Device {} for {}'.format(device, '/'.join(topics)))
 
     async def slice_raw_data(raw_data):
         if elfin_log:
@@ -388,7 +287,7 @@ def do_work(config, device_list, option):
 
         if onoff != HOMESTATE.get(key):
             HOMESTATE[key] = onoff
-            topic = STATE_TOPIC.format(deviceID, state)
+            topic = STATE_TOPIC.format(tsHo +'_'+ deviceID, state)
             mqtt_client.publish(topic, onoff.encode())
             if mqtt_log:
                 log('[LOG] ->> HA : {} >> {}'.format(topic, onoff))
@@ -430,7 +329,7 @@ def do_work(config, device_list, option):
             val = temperature[state]
             if val != HOMESTATE.get(key):
                 HOMESTATE[key] = val
-                topic = STATE_TOPIC.format(deviceID, state)
+                topic = STATE_TOPIC.format(tsHo +'_'+ deviceID, state)
                 mqtt_client.publish(topic, val.encode())
                 if mqtt_log:
                     log('[LOG] ->> HA : {} -> {}'.format(topic, val))
@@ -464,29 +363,33 @@ def do_work(config, device_list, option):
 
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
-            log("MQTT 접속 완료 : "+ userdata)
+            log("MQTT 접속 완료 = "+ userdata)
 
             # 장치 구독
             num = DEVICE_LISTS['Thermo']['Num']
-            TS_ELFIN_TOPIC = userdata
-            TS_ELFIN_SEND_TOPIC = TS_ELFIN_TOPIC + '/send'
 
-            log("[DC] mqtt subscribe = "+ str(num))
-            client.subscribe([(HA_TOPIC + '/#', 0), (TS_ELFIN_TOPIC + '/recv', 0), (TS_ELFIN_SEND_TOPIC + '/send', 0)])
+            log( "[DC] mqtt subscribe = {}".format(num) )
+            log( "[DC] mqtt subscribe = {}".format((HA_TOPIC + '/#')) )
+            log( "[DC] mqtt subscribe = {}".format((ELFIN_TOPIC + '/recv')) )
+            log( "[DC] mqtt subscribe = {}".format((ELFIN_TOPIC + '/send')) )
+
+            client.subscribe([(HA_TOPIC + '/#', 0), (ELFIN_TOPIC + '/recv', 0), (ELFIN_TOPIC + '/send', 0)])
             
+            '''
             if 'Thermo' in DEVICE_LISTS:
                 for i in range(num):
-                    asyncio.run(update_state(userdata + '_Thermo', i, 'OFF'))
+                    asyncio.run(update_state('Thermo', i, 'OFF'))
 
             if 'EV' in DEVICE_LISTS:
                 asyncio.run(update_state('EV', 0, 'OFF'))
+            '''
 
         else:
             errcode = {1: 'Connection refused - incorrect protocol version',
-                       2: 'Connection refused - invalid client identifier',
-                       3: 'Connection refused - server unavailable',
-                       4: 'Connection refused - bad username or password',
-                       5: 'Connection refused - not authorised'}
+                    2: 'Connection refused - invalid client identifier',
+                    3: 'Connection refused - server unavailable',
+                    4: 'Connection refused - bad username or password',
+                    5: 'Connection refused - not authorised'}
             log(errcode[rc])
 
     def on_message(client, userdata, msg):
@@ -499,48 +402,23 @@ def do_work(config, device_list, option):
         except:
             pass
 
-        
-    # MQTT 서버 접속 설정
-    tsMqttIp = config['mqtt_server']
-    tsMqttId = config['mqtt_id']
-    tsMqttPw = config['mqtt_password']
-    log("[DC] mqtt_ip = " + tsMqttIp)
-    log("[DC] mqtt_id = " + tsMqttId)
-    log("[DC] mqtt_pw = " + tsMqttPw)
-    
-    tsElfinIp = option['tsElfinIp']
-    tsDong = option['tsDong']
-    tsHo = option['tsHo']
-    log("[DC] tsElfinIp = " + tsElfinIp)
-    log("[DC] tsDong = " + tsDong)
-    log("[DC] tsHo = " + tsHo)
-
-    #mqtt_client = mqtt.Client('mqtt2elfin-commax-'+ "{}_{}".format(tsDong, tsHo))
-    mqtt_client = mqtt.Client()
-    mqtt_client.username_pw_set(tsMqttId, tsMqttPw)
-    mqtt_client.user_data_set(tsHo)
-    mqtt_client.on_connect = on_connect
-    mqtt_client.on_message = on_message
-    mqtt_client.connect_async(tsMqttIp)
-    mqtt_client.loop_start()
-
     async def send_to_elfin():
         while True:
             try:
                 if time.time_ns() - COLLECTDATA['LastRecv'] > 10000000000:  # 10s
                     #log('[WARNING] 10초간 신호를 받지 못했습니다. ew11 기기를 재시작합니다.')
                     try:
+                        '''
                         elfin_id = config['elfin_id']
                         elfin_password = config['elfin_password']
                         elfin_server = config['elfin_server']
-
-                        #ew11 = telnetlib.Telnet(elfin_server)
-                        #ew11.read_until(b"login:")
-                        #ew11.write(elfin_id.encode('utf-8') + b'\n')
-                        #ew11.read_until(b"password:")
-                        #ew11.write(elfin_password.encode('utf-8') + b'\n')
-                        #ew11.write('Restart'.encode('utf-8') + b'\n')
-
+                        ew11 = telnetlib.Telnet(elfin_server)
+                        ew11.read_until(b"login:")
+                        ew11.write(elfin_id.encode('utf-8') + b'\n')
+                        ew11.read_until(b"password:")
+                        ew11.write(elfin_password.encode('utf-8') + b'\n')
+                        ew11.write('Restart'.encode('utf-8') + b'\n')
+                        '''
                         await asyncio.sleep(10)
 
                     except:
@@ -550,18 +428,61 @@ def do_work(config, device_list, option):
                 elif time.time_ns() - COLLECTDATA['LastRecv'] > 100000000:
                     if QUEUE:
                         send_data = QUEUE.pop(0)
-                        if elfin_log:
-                            log('[SIGNAL] send : {}'.format(send_data))
-                        mqtt_client.publish(ELFIN_SEND_TOPIC, bytes.fromhex(send_data['sendcmd']))
+
+                        if elfin_log: 
+                            log('[SIGNAL] send > {} = {}'.format(ELFIN_SEND_TOPIC, send_data))
+
+                        sendBytes = bytes.fromhex(send_data['sendcmd'])
+                        recvBytes = None
+
+                        # MQTT에 전송
+                        mqtt_client.publish(ELFIN_SEND_TOPIC, sendBytes)
                         #await asyncio.sleep(0.01)
 
-                        TRYCNT = 3
+                        # 소켓으로 전송
+                        tsElfinIp = OPTION['tsElfinIp']
+                        tsElfinPort = OPTION['tsElfinPort']
+
+                        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        client_socket.connect((tsElfinIp, tsElfinPort))
+                        client_socket.send(sendBytes)
+                        recvBytes = client_socket.recv(512)
+                        client_socket.close()
+
+                        send = sendBytes.hex().upper()
+                        recv = recvBytes.hex().upper()
+
+                        log("[DC] {}:{} send > {}".format(tsElfinIp, tsElfinPort, send))
+                        log("[DC] {}:{} recv < {}".format(tsElfinIp, tsElfinPort, recv))
+
+                        if send_data['recvcmd'] == 'sync':
+                            # 02 01 00 00 00 00 00 03
+                            # 82 81 01 25 27 00 00 50 
+                            #     ^ 1이면 ON, 0이면 OFF
+                            onoff = int(recv[3:4])
+                            dev = int(recv[5:6])
+                            curTemp = str(recv[6:8])
+                            setTemp = str(recv[8:10])
+
+                            if onoff == 0:
+                                onoff = 'OFF'
+                            else:
+                                onoff = 'ON'
+
+                            log("[DC-sync] dev = {}, onoff = {}, curTemp = {}, setTemp = {}".format(dev, onoff, curTemp, setTemp))
+                            await update_state('Thermo', dev - 1, onoff)
+                            await update_temperature(dev - 1, curTemp, setTemp)
+
+                        else:
+                            await slice_raw_data(recvBytes.hex().upper())
+
+                        TRYCNT = 1
                         if send_data['count'] < TRYCNT:
                             send_data['count'] = send_data['count'] + 1
                             QUEUE.append(send_data)
                         else:
                             if elfin_log:
-                                log('[SIGNAL] Send over '+ str(TRYCNT) +' times. Send Failure. Delete a queue: {}'.format(send_data))
+                                log('[SIGNAL] Send over {}...'.format(TRYCNT))
 
             except Exception as err:
                 log('[ERROR] send_to_elfin(): {}'.format(err))
@@ -569,25 +490,105 @@ def do_work(config, device_list, option):
 
             await asyncio.sleep(0.01)
 
+    def updateSync():
+        time.sleep(5)
+        while True:
+            # 상태정보 업데이트
+            num = int(DEVICE_LISTS['Thermo']['Num'])
+            
+            for i in range(num):
+                sendcmd = "020"+ str(i+1) + "00000000000" + str(3+i)
+                recvcmd = "sync"
+                #log("[DC-sync] sendcmd = {}".format(sendcmd))
+                QUEUE.append({'sendcmd': sendcmd, 'recvcmd': recvcmd, 'count': 1})
+
+            time.sleep(5)
+
+
+#----------------------------------------------------------------------------------------------
+    debug = CONFIG['DEBUG']
+    mqtt_log = CONFIG['mqtt_log']
+    elfin_log = CONFIG['elfin_log']
+    find_signal = CONFIG['save_unregistered_signal']
+
+    tsElfinIp = OPTION['tsElfinIp']
+    tsElfinPort = OPTION['tsElfinPort']
+    tsDong = OPTION['tsDong']
+    tsHo = OPTION['tsHo']
+
+    log( "[DC] debug = {}".format(debug) )
+    log( "[DC] mqtt_log = {}".format(mqtt_log) )
+    log( "[DC] elfin_log = {}".format(elfin_log) )
+    log( "[DC] find_signal = {}".format(find_signal) )
+
+    log( "[DC] tsElfinIp = {}".format(tsElfinIp) )
+    log( "[DC] tsElfinPort = {}".format(tsElfinPort) )
+    log( "[DC] tsDong = {}".format(tsDong) )
+    log( "[DC] tsHo = {}".format(tsHo) )
+
+    # 토픽 설정 
+    HA_TOPIC = 'homenet'
+    STATE_TOPIC = HA_TOPIC + '/{}/{}/state'
+    ELFIN_TOPIC = tsHo
+    ELFIN_SEND_TOPIC = ELFIN_TOPIC + '/send'
+    DEVICE_LISTS = {}
+
+    for name in device_list:
+        log('[DC] make_device_info : ' + name)
+        device_info = make_device_info(name, device_list[name])
+        if device_info:
+            DEVICE_LISTS[name] = device_info
+
+    prefix_list = {}
+    log('-------------------------')
+    log('등록된 기기 목록 DEVICE_LISTS')
+    log('-------------------------')
+    for name in DEVICE_LISTS:
+        state = DEVICE_LISTS[name][1].get('stateON')
+        if state:
+            prefix = state[0][:2] if isinstance(state, list) else state[:2]
+            prefix_list[prefix] = name
+        log('{}: {}'.format(name, DEVICE_LISTS[name]))
+    log('----------------------')
+
+    HOMESTATE = {}
+    QUEUE = []
+    COLLECTDATA = {'cond': find_signal, 'data': set(), 'EVtime': time.time(), 'LastRecv': time.time_ns()}
+    if find_signal:
+        log('[LOG] 신호를 수집 중..')
+
+    # MQTT 서버 접속 설정
+    tsMqttIp = CONFIG['mqtt_server']
+    tsMqttId = CONFIG['mqtt_id']
+    tsMqttPw = CONFIG['mqtt_password']
+    log("[DC] mqtt_ip = " + tsMqttIp)
+    log("[DC] mqtt_id = " + tsMqttId)
+    log("[DC] mqtt_pw = " + tsMqttPw)
+
+    mqtt_client = mqtt.Client(tsHo + "-mqtt")
+    mqtt_client.username_pw_set(tsMqttId, tsMqttPw)
+    mqtt_client.user_data_set(tsHo)
+    mqtt_client.on_connect = on_connect
+    mqtt_client.on_message = on_message
+    mqtt_client.connect_async(tsMqttIp)
+    mqtt_client.loop_start()
+
+    # 동기화 스레드 생성
+    thread = threading.Thread(target=updateSync)
+    thread.start()
+
     #loop = asyncio.get_event_loop()
-    
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.run_until_complete(send_to_elfin())
-    
+
     log("end do_work")
 
     loop.close()
     mqtt_client.loop_stop()
-
-
-def ditongs(config, dev, option):
-    log("ditongs")
-    time.sleep(1)
-
+#----------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
-
     with open(config_dir + '/options.json') as file:
         CONFIG = json.load(file)
 
@@ -596,27 +597,25 @@ if __name__ == '__main__':
         with open(pathFoundDevice) as file:
             log('기기 정보 파일을 찾음: ' + pathFoundDevice)
             OPTION = json.load(file)
-            log('[DC] json = {}'.format(OPTION))
 
     except IOError:
         log('기기 정보 파일이 없습니다: ' + pathFoundDevice)
-        OPTION = find_device(CONFIG)
+        #OPTION = find_device(CONFIG)
+
+    log( "[DC] json = {}".format(OPTION))
 
     # 다중 처리 
     device = OPTION["device"]
-    log('[DC] device = {}'.format(device))
 
     for idx, item in enumerate(device):
         log("[DC] item {} = {}".format(idx, item))
-        dev = {}
-        dev["Thermo"] = item["Thermo"]
-        log("[DC] dev = {}".format(dev))
-        thread = threading.Thread(target=do_work, args=(CONFIG,dev,item))
-        #thread.daemon = True 
+        device_list = {}
+        device_list["Thermo"] = item["Thermo"]
+        log("[DC] device_list = {}".format(device_list))
+        thread = threading.Thread(target=main, args=(CONFIG, item, device_list))
         thread.start()
-        time.sleep(3)
+        time.sleep(1)
 
     while True:
-        # 무한루프 
-        log('[DC] main thread sleep...')
-        time.sleep(10)
+        # 무한루프
+        time.sleep(5)
