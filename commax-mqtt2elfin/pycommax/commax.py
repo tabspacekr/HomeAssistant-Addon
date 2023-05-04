@@ -11,7 +11,7 @@ data_dir = '/pycommax'
 
 HA_TOPIC = 'homenet'
 STATE_TOPIC = HA_TOPIC + '/{}/{}/state'
-ELFIN_TOPIC = 'DONG_HO' #동_호
+ELFIN_TOPIC = '401ho' #동_호
 ELFIN_SEND_TOPIC = ELFIN_TOPIC + '/send'
 
 
