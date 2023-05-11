@@ -288,7 +288,8 @@ def main(CONFIG, OPTION, device_list):
         if onoff != HOMESTATE.get(key):
             HOMESTATE[key] = onoff
             topic = STATE_TOPIC.format(tsHo +'_'+ deviceID, state)
-            mqtt_client.publish(topic, onoff.encode())
+            #mqtt_client.publish(topic, onoff.encode())
+            mqtt_client.publish(topic, onoff.encode(), 1)
             if mqtt_log:
                 log('[LOG] ->> HA : {} >> {}'.format(topic, onoff))
         else:
@@ -313,7 +314,8 @@ def main(CONFIG, OPTION, device_list):
         if onoff != HOMESTATE.get(key):
             HOMESTATE[key] = onoff
             topic = STATE_TOPIC.format(deviceID, state)
-            mqtt_client.publish(topic, onoff.encode())
+            #mqtt_client.publish(topic, onoff.encode())
+            mqtt_client.publish(topic, onoff.encode(), 1)
             if mqtt_log:
                 log('[LOG] ->> HA : {} >> {}'.format(topic, onoff))
         else:
@@ -330,7 +332,8 @@ def main(CONFIG, OPTION, device_list):
             if val != HOMESTATE.get(key):
                 HOMESTATE[key] = val
                 topic = STATE_TOPIC.format(tsHo +'_'+ deviceID, state)
-                mqtt_client.publish(topic, val.encode())
+                #mqtt_client.publish(topic, val.encode())
+                mqtt_client.publish(topic, val.encode(),1)
                 if mqtt_log:
                     log('[LOG] ->> HA : {} -> {}'.format(topic, val))
             else:
@@ -343,7 +346,8 @@ def main(CONFIG, OPTION, device_list):
         try:
             val = '%.1f' % float(int(val) / 10)
             topic = STATE_TOPIC.format(deviceID, 'watt')
-            mqtt_client.publish(topic, val.encode())
+            #mqtt_client.publish(topic, val.encode())
+            mqtt_client.publish(topic, val.encode(),1)
             if debug:
                 log('[LOG] ->> HA : {} -> {}'.format(topic, val))
         except:
@@ -355,7 +359,8 @@ def main(CONFIG, OPTION, device_list):
             BF = device_info['EV']['BasementFloor']
             val = str(int(val) - BF + 1) if val >= BF else 'B' + str(BF - int(val))
             topic = STATE_TOPIC.format(deviceID, 'floor')
-            mqtt_client.publish(topic, val.encode())
+            #mqtt_client.publish(topic, val.encode())
+            mqtt_client.publish(topic, val.encode(),1)
             if debug:
                 log('[LOG] ->> HA : {} -> {}'.format(topic, val))
         except:
@@ -436,7 +441,8 @@ def main(CONFIG, OPTION, device_list):
                         recvBytes = None
 
                         # MQTT에 전송
-                        mqtt_client.publish(ELFIN_SEND_TOPIC, sendBytes)
+                        #mqtt_client.publish(ELFIN_SEND_TOPIC, sendBytes)
+                        mqtt_client.publish(ELFIN_SEND_TOPIC, sendBytes, 1)
                         #await asyncio.sleep(0.01)
 
                         # 소켓으로 전송
