@@ -1,0 +1,164 @@
+binary_sensor:
+#401ho
+- name: "401ho_input_line1_leak"
+  state_topic: "homenet/401ho_Thermo1/input/state"
+  value_template: ''
+
+- name: "401ho_output_line1_leak"
+  state_topic: "homenet/401ho_Thermo1/output/state"
+  value_template: ''
+
+- name: "401ho_input_line2_leak"
+  state_topic: "homenet/401ho_Thermo2/input/state"
+  value_template: ''
+
+- name: "401ho_output_line2_leak"
+  state_topic: "homenet/401ho_Thermo2/output/state"
+  value_template: ''
+
+- name: "401ho_input_line3_leak"
+  state_topic: "homenet/401ho_Thermo3/input/state"
+  value_template: ''
+
+- name: "401ho_output_line3_leak"
+  state_topic: "homenet/401ho_Thermo3/output/state"
+  value_template: ''
+
+- name: "401ho_input_line_main_leak"
+  state_topic: "homenet/401ho_Main/input/state"
+  value_template: ''
+
+- name: "401ho_output_line_main_leak"
+  state_topic: "homenet/401ho_Main/output/state"
+  value_template: ''
+
+- name: "401ho_floor_line_main_leak"
+  state_topic: "homenet/401ho_Main/floor/state"
+  value_template: ''
+
+
+switch:
+#401ho
+- unique_id: "401ho_R1_Valve"
+  name: "401ho R1 Valve"
+  state_topic: "homenet/401ho_Thermo1/power/state"
+  command_topic: "homenet/401ho_Thermo1/power/command"
+#  mode_state_template: >-
+#   { % set modes = {'OFF': 'off', 'ON': 'ON'} %}
+#   {{modes[value] if value in modes.keys() else 'off'}}
+  payload_on: "ON"
+  payload_off: "OFF"
+  state_on: "ON"
+  state_off: "OFF"
+  optimistic: false
+  qos: 0
+  retain: true
+
+- unique_id: "401ho_R2_Valve"
+  name: "401ho R2 Valve"
+  state_topic: "homenet/401ho_Thermo2/power/state"
+  command_topic: "homenet/401ho_Thermo2/power/command"
+#  mode_state_template: >-
+#   { % set modes = {'OFF': 'off', 'ON': 'ON'} %}
+#   {{modes[value] if value in modes.keys() else 'off'}}
+  payload_on: "ON"
+  payload_off: "OFF"
+  state_on: "ON"
+  state_off: "OFF"
+  optimistic: false
+  qos: 0
+  retain: true
+
+- unique_id: "401ho_R3_Valve"
+  name: "401ho R3 Valve"
+  state_topic: "homenet/401ho_Thermo3/power/state"
+  command_topic: "homenet/401ho_Thermo3/power/command"
+#  mode_state_template: >-
+#   { % set modes = {'OFF': 'off', 'ON': 'ON'} %}
+#   {{modes[value] if value in modes.keys() else 'off'}}
+  payload_on: "ON"
+  payload_off: "OFF"
+  state_on: "ON"
+  state_off: "OFF"
+  optimistic: false
+  qos: 0
+  retain: true
+
+- unique_id: "401ho_Main_Valve"
+  name: "401ho Main Valve"
+  state_topic: "homenet/401ho_Main/power/state"
+  command_topic: "homenet/401ho_Main/power/command"
+#  mode_state_template: >-
+#   { % set modes = {'OFF': 'off', 'ON': 'ON'} %}
+#   {{modes[value] if value in modes.keys() else 'off'}}
+  payload_on: "ON"
+  payload_off: "OFF"
+  state_on: "ON"
+  state_off: "OFF"
+  optimistic: false
+  qos: 0
+  retain: true
+
+sensor:
+- unique_id: "401ho_pressure"
+  name: "401ho_pressure"
+  state_topic: "homenet/401ho_Main/pressure/state"
+  unit_of_measurement: "psi"
+
+climate:
+#103호
+- name: "401ho_R1"
+  modes:
+    - "off"
+    - "heat"
+  mode_state_topic: "homenet/401ho_Thermo1/power/state"
+  mode_command_topic: "homenet/401ho_Thermo1/power/command"
+  mode_state_template: >-
+    {% set modes = { 'OFF':'off', 'ON':'heat'} %}
+    {{ modes[value] if value in modes.keys() else 'off' }}
+  current_temperature_topic: "homenet/401ho_Thermo1/curTemp/state"
+  temperature_state_topic: "homenet/401ho_Thermo1/setTemp/state"
+  temperature_command_topic: "homenet/401ho_Thermo1/setTemp/command"
+  precision: 1.0
+  
+- name: "401ho_R2"
+  modes:
+    - "off"
+    - "heat"
+  mode_state_topic: "homenet/401ho_Thermo2/power/state"
+  mode_command_topic: "homenet/401ho_Thermo2/power/command"
+  mode_state_template: >-
+    {% set modes = { 'OFF':'off', 'ON':'heat'} %}
+    {{ modes[value] if value in modes.keys() else 'off' }}
+  current_temperature_topic: "homenet/401ho_Thermo2/curTemp/state"
+  temperature_state_topic: "homenet/401ho_Thermo2/setTemp/state"
+  temperature_command_topic: "homenet/401ho_Thermo2/setTemp/command"
+  precision: 1.0
+  
+- name: "401ho_R3"
+  modes:
+    - "off"
+    - "heat"
+  mode_state_topic: "homenet/401ho_Thermo3/power/state"
+  mode_command_topic: "homenet/401ho_Thermo3/power/command"
+  mode_state_template: >-
+    {% set modes = { 'OFF':'off', 'ON':'heat'} %}
+    {{ modes[value] if value in modes.keys() else 'off' }}
+  current_temperature_topic: "homenet/401ho_Thermo3/curTemp/state"
+  temperature_state_topic: "homenet/401ho_Thermo3/setTemp/state"
+  temperature_command_topic: "homenet/401ho_Thermo3/setTemp/command"
+  precision: 1.0
+  
+- name: "401ho_R4"
+  modes:
+    - "off"
+    - "heat"
+  mode_state_topic: "homenet/401ho_Thermo4/power/state"
+  mode_command_topic: "homenet/401ho_Thermo4/power/command"
+  mode_state_template: >-
+    {% set modes = { 'OFF':'off', 'ON':'heat'} %}
+    {{ modes[value] if value in modes.keys() else 'off' }}
+  current_temperature_topic: "homenet/401ho_Thermo4/curTemp/state"
+  temperature_state_topic: "homenet/401ho_Thermo4/setTemp/state"
+  temperature_command_topic: "homenet/401ho_Thermo4/setTemp/command"
+  precision: 1.0
