@@ -1,9 +1,9 @@
 {
-  "name": "MQTT2elfin COMMAX Wallpad Controller with Python",
-  "version": "1.2.1",
+  "name": "MQTT2ELFIN for SEIK Controller",
+  "version": "1.2.2",
   "slug": "commax_mqtt2elfin_python",
-  "url": "https://github.com/kimtc99/HAaddon",
-  "description": "mqtt 통신을 활용한 코맥스 월패드 컨트롤러",
+  "url": "https://github.com/tirasol/HAaddon",
+  "description": "MQTT + ELFIN SOCKET 통신을 활용한 세익(SEIK) 컨트롤러 애드온",
   "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
   "map": [
     "share:rw"
@@ -15,10 +15,10 @@
     "mqtt_log": true,
     "elfin_log": true,
     "save_unregistered_signal": true,
-    "mqtt_server": "192.168.88.11",
+    "mqtt_server": "192.168.88.xx",
     "mqtt_id": "mqtt",
     "mqtt_password": "!SUPERSTRONGPASSWORD",
-    "elfin_server": "192.168.88.12",
+    "elfin_server": "192.168.88.xx",
     "elfin_id": "admin",
     "elfin_password": "admin"
   },
@@ -37,8 +37,17 @@
     "1_ip": "str",
     "1_lake": "str",
     "1_valves": "str",
-    "2_ip": "str",
-    "2_lake": "str",
-    "2_valves": "str"
+    "2_ip": "str?",
+    "2_lake": "str?",
+    "2_valves": "str?",
+    "3_ip": "str?",
+    "3_lake": "str?",
+    "3_valves": "str?",
+    "4_ip": "str?",
+    "4_lake": "str?",
+    "4_valves": "str?",
+    "5_ip": "str?",
+    "5_lake": "str?",
+    "5_valves": "str?",    
   }
 }
