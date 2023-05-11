@@ -2,7 +2,7 @@ import paho.mqtt.client as mqtt
 import json
 import time
 import asyncio
-import telnetlib
+import telnetlib # python3.13에서는 telnetlib이 사라지고 telnetlib3로 변경예정임
 import threading
 import socket
 
