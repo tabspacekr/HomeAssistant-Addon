@@ -48,6 +48,6 @@
     "4_valves": "str?",
     "5_ip": "str?",
     "5_lake": "str?",
-    "5_valves": "str?",    
+    "5_valves": "str?"
   }
 }
