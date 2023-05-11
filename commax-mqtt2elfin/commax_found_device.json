@@ -1,0 +1,26 @@
+{
+        "device":
+        [
+                {
+                        "tsDong": "DC",
+                        "tsHo": "401ho",
+                        "tsElfinIp": "192.168.0.104",
+                        "tsElfinPort": 5000,
+                        "Thermo":
+                        {
+                                "Number":                3,
+                                "commandOFF":    "0401048000000089",
+                                "commandON":     "040104810000008A",
+                                "commandCHANGE": "040103220000002A",
+                                "commandNUM":    4,
+                                "curTemp":               7,
+                                "setTemp":               9,
+                                "chaTemp":               7,
+                                "stateOFF":      "848101232500004E",
+                                "stateON":               "848001232500004D",
+                                "stateNUM":      6,
+                                "stateONOFFNUM": 4
+                        }
+                }
+        ]
+}
