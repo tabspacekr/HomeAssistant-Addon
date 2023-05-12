@@ -123,6 +123,7 @@ climate:
   min_temp: 5
   max_temp: 40
   optimistic: true
+  retain: true
   
 - name: "401ho_R2"
   modes:
@@ -140,6 +141,7 @@ climate:
   min_temp: 5
   max_temp: 40
   optimistic: true
+  retain: true
   
 - name: "401ho_R3"
   modes:
@@ -157,3 +159,4 @@ climate:
   min_temp: 5
   max_temp: 40
   optimistic: true
+  retain: true
