@@ -43,60 +43,60 @@ switch:
   name: "401ho R1 Valve"
   state_topic: "homenet/401ho_Thermo1/power/state"
   command_topic: "homenet/401ho_Thermo1/power/command"
-#  mode_state_template: >-
+#   mode_state_template: >-
 #   { % set modes = {'OFF': 'off', 'ON': 'ON'} %}
 #   {{modes[value] if value in modes.keys() else 'off'}}
   payload_on: "ON"
   payload_off: "OFF"
   state_on: "ON"
   state_off: "OFF"
-  optimistic: false
-  qos: 0
+  optimistic: true
+  qos: 2
   retain: true
 
 - unique_id: "401ho_R2_Valve"
   name: "401ho R2 Valve"
   state_topic: "homenet/401ho_Thermo2/power/state"
   command_topic: "homenet/401ho_Thermo2/power/command"
-#  mode_state_template: >-
+#   mode_state_template: >-
 #   { % set modes = {'OFF': 'off', 'ON': 'ON'} %}
 #   {{modes[value] if value in modes.keys() else 'off'}}
   payload_on: "ON"
   payload_off: "OFF"
   state_on: "ON"
   state_off: "OFF"
-  optimistic: false
-  qos: 0
+  optimistic: true
+  qos: 2
   retain: true
 
 - unique_id: "401ho_R3_Valve"
   name: "401ho R3 Valve"
   state_topic: "homenet/401ho_Thermo3/power/state"
   command_topic: "homenet/401ho_Thermo3/power/command"
-#  mode_state_template: >-
+#   mode_state_template: >-
 #   { % set modes = {'OFF': 'off', 'ON': 'ON'} %}
 #   {{modes[value] if value in modes.keys() else 'off'}}
   payload_on: "ON"
   payload_off: "OFF"
   state_on: "ON"
   state_off: "OFF"
-  optimistic: false
-  qos: 0
+  optimistic: true
+  qos: 2
   retain: true
 
 - unique_id: "401ho_Main_Valve"
   name: "401ho Main Valve"
   state_topic: "homenet/401ho_Main/power/state"
   command_topic: "homenet/401ho_Main/power/command"
-#  mode_state_template: >-
+#   mode_state_template: >-
 #   { % set modes = {'OFF': 'off', 'ON': 'ON'} %}
 #   {{modes[value] if value in modes.keys() else 'off'}}
   payload_on: "ON"
   payload_off: "OFF"
   state_on: "ON"
   state_off: "OFF"
-  optimistic: false
-  qos: 0
+  optimistic: true
+  qos: 2
   retain: true
 
 sensor:
@@ -123,6 +123,7 @@ climate:
   min_temp: 5
   max_temp: 40
   optimistic: true
+  qos: 2
   retain: true
   
 - name: "401ho_R2"
@@ -141,6 +142,7 @@ climate:
   min_temp: 5
   max_temp: 40
   optimistic: true
+  qos: 2
   retain: true
   
 - name: "401ho_R3"
@@ -159,4 +161,5 @@ climate:
   min_temp: 5
   max_temp: 40
   optimistic: true
+  qos: 2
   retain: true
