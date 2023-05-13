@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir paho-mqtt
 
 # Copy data for add-on
 COPY run.sh /
-COPY pycommax /pycommax
+COPY seik /seik
 COPY seik_found_device.json /share/
 
 WORKDIR /share
