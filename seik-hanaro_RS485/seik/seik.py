@@ -8,7 +8,7 @@ import socket
 
 share_dir = '/share'
 config_dir = '/data'
-data_dir = '/pycommax'
+data_dir = '/seik'
 
 def log(string):
     date = time.strftime('%Y-%m-%d %p %I:%M:%S', time.localtime(time.time()))
@@ -599,7 +599,7 @@ if __name__ == '__main__':
         CONFIG = json.load(file)
 
     try:
-        pathFoundDevice = share_dir + '/commax_found_device.json'
+        pathFoundDevice = share_dir + '/seik_found_device.json'
         with open(pathFoundDevice) as file:
             log('기기 정보 파일을 찾음: ' + pathFoundDevice)
             OPTION = json.load(file)
