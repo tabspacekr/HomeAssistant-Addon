@@ -1,5 +1,5 @@
-HA Addon Repository
+HomeAssistant Addon Repository by TabSpace
 ====================
 
-## 코맥스 월패드 애드온 - EW11 전용
-### [commax-mqtt2elfin](https://github.com/tirasol/HAaddon/tree/master/commax-mqtt2elfin)
+## 세익 하나로 온도조절기 애드온 - Elfin EW11 RS485용
+### [seik-hanaro_RS485](https://github.com/tabspacekr/HomeAssistant-Addon/tree/master/seik-hanaro_RS485)
