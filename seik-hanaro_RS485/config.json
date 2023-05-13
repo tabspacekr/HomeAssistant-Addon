@@ -1,9 +1,9 @@
 {
-  "name": "MQTT2ELFIN for SEIK Controller",
-  "version": "1.2.5",
-  "slug": "commax_mqtt2elfin_python",
-  "url": "https://github.com/tirasol/HAaddon",
-  "description": "MQTT + ELFIN SOCKET 통신을 활용한 세익(SEIK) 컨트롤러 애드온",
+  "name": "SEIK-HANARO RS485 Controller",
+  "version": "1.2.6",
+  "slug": "seik-hanaro_rs485",
+  "url": "https://github.com/tabspacekr/HomeAssistant-Addon",
+  "description": "MQTT + ELFIN SOCKET 통신을 활용한 세익(SEIK) 하나로(HANARO) 온도조절기 컨트롤러 애드온",
   "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
   "map": [
     "share:rw"
