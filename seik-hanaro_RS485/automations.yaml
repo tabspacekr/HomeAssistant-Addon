@@ -1,0 +1,31 @@
+- id: '1684121891830'
+  alias: 401ho_availablity_check
+  description: ''
+  trigger:
+  - platform: time_pattern
+    seconds: /10
+  condition: []
+  action:
+  - if:
+    - condition: state
+      entity_id: binary_sensor.ew11_401ho
+      state: 'on'
+    then:
+    - service: mqtt.publish
+      data:
+        qos: '2'
+        retain: false
+        topic: homenet/401ho/LWT
+        payload: Online
+  - if:
+    - condition: state
+      entity_id: binary_sensor.ew11_401ho
+      state: 'off'
+    then:
+    - service: mqtt.publish
+      data:
+        qos: '2'
+        retain: false
+        topic: homenet/401ho/LWT
+        payload: Offline
+  mode: single
