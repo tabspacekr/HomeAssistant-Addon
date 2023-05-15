@@ -43,6 +43,10 @@ switch:
   name: "401ho R1 Valve"
   state_topic: "homenet/401ho_Thermo1/power/state"
   command_topic: "homenet/401ho_Thermo1/power/command"
+  availability:
+    - topic: "homenet/401ho/LWT"
+      payload_available: "Online"
+      payload_not_available: "Offline"
 #   mode_state_template: >-
 #   { % set modes = {'OFF': 'off', 'ON': 'ON'} %}
 #   {{modes[value] if value in modes.keys() else 'off'}}
@@ -58,6 +62,10 @@ switch:
   name: "401ho R2 Valve"
   state_topic: "homenet/401ho_Thermo2/power/state"
   command_topic: "homenet/401ho_Thermo2/power/command"
+  availability:
+    - topic: "homenet/401ho/LWT"
+      payload_available: "Online"
+      payload_not_available: "Offline"
 #   mode_state_template: >-
 #   { % set modes = {'OFF': 'off', 'ON': 'ON'} %}
 #   {{modes[value] if value in modes.keys() else 'off'}}
@@ -73,6 +81,10 @@ switch:
   name: "401ho R3 Valve"
   state_topic: "homenet/401ho_Thermo3/power/state"
   command_topic: "homenet/401ho_Thermo3/power/command"
+  availability:
+    - topic: "homenet/401ho/LWT"
+      payload_available: "Online"
+      payload_not_available: "Offline"
 #   mode_state_template: >-
 #   { % set modes = {'OFF': 'off', 'ON': 'ON'} %}
 #   {{modes[value] if value in modes.keys() else 'off'}}
@@ -88,6 +100,10 @@ switch:
   name: "401ho Main Valve"
   state_topic: "homenet/401ho_Main/power/state"
   command_topic: "homenet/401ho_Main/power/command"
+  availability:
+    - topic: "homenet/401ho/LWT"
+      payload_available: "Online"
+      payload_not_available: "Offline"
 #   mode_state_template: >-
 #   { % set modes = {'OFF': 'off', 'ON': 'ON'} %}
 #   {{modes[value] if value in modes.keys() else 'off'}}
@@ -104,6 +120,25 @@ sensor:
   name: "401ho_pressure"
   state_topic: "homenet/401ho_Main/pressure/state"
   unit_of_measurement: "psi"
+  
+- unique_id: "401ho_R1_Temperature"
+  name: "401ho_R1_Temperature"
+  state_topic: "homenet/401ho_Thermo1/curTemp/state"
+  device_class: temperature
+  unit_of_measurement: "°C"
+
+- unique_id: "401ho_R2_Temperature"
+  name: "401ho_R2_Temperature"
+  state_topic: "homenet/401ho_Thermo2/curTemp/state"
+  device_class: temperature
+  unit_of_measurement: "°C"
+
+- unique_id: "401ho_R3_Temperature"
+  name: "401ho_R3_Temperature"
+  state_topic: "homenet/401ho_Thermo3/curTemp/state"
+  device_class: temperature
+  unit_of_measurement: "°C"
+
 
 climate:
 #103호
@@ -119,9 +154,13 @@ climate:
   current_temperature_topic: "homenet/401ho_Thermo1/curTemp/state"
   temperature_state_topic: "homenet/401ho_Thermo1/setTemp/state"
   temperature_command_topic: "homenet/401ho_Thermo1/setTemp/command"
-  temp_step: 0.5
+  temp_step: 1.0
   min_temp: 5
   max_temp: 40
+  availability:
+    - topic: "homenet/401ho/LWT"
+      payload_available: "Online"
+      payload_not_available: "Offline"
   optimistic: true
   qos: 2
   retain: true
@@ -138,9 +177,13 @@ climate:
   current_temperature_topic: "homenet/401ho_Thermo2/curTemp/state"
   temperature_state_topic: "homenet/401ho_Thermo2/setTemp/state"
   temperature_command_topic: "homenet/401ho_Thermo2/setTemp/command"
-  temp_step: 0.5
+  temp_step: 1.0
   min_temp: 5
   max_temp: 40
+  availability:
+    - topic: "homenet/401ho/LWT"
+      payload_available: "Online"
+      payload_not_available: "Offline"
   optimistic: true
   qos: 2
   retain: true
@@ -157,9 +200,13 @@ climate:
   current_temperature_topic: "homenet/401ho_Thermo3/curTemp/state"
   temperature_state_topic: "homenet/401ho_Thermo3/setTemp/state"
   temperature_command_topic: "homenet/401ho_Thermo3/setTemp/command"
-  temp_step: 0.5
+  temp_step: 1.0
   min_temp: 5
   max_temp: 40
+  availability:
+    - topic: "homenet/401ho/LWT"
+      payload_available: "Online"
+      payload_not_available: "Offline"
   optimistic: true
   qos: 2
   retain: true
