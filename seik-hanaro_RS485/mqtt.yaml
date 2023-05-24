@@ -96,6 +96,67 @@ switch:
   qos: 2
   retain: true
 
+###
+#401ho 외출
+- unique_id: "401ho_R1_Outing"
+  name: "401ho R1 Outing"
+  state_topic: "homenet/401ho_Thermo1/power/state_outing"
+  command_topic: "homenet/401ho_Thermo1/power/command"
+  availability:
+    - topic: "homenet/401ho/LWT"
+      payload_available: "Online"
+      payload_not_available: "Offline"
+#   mode_state_template: >-
+#   { % set modes = {'OFF': 'off', 'ON': 'ON'} %}
+#   {{modes[value] if value in modes.keys() else 'off'}}
+  payload_on: "outing"
+  payload_off: "comeback"
+  state_on: "ON"
+  state_off: "OFF"
+  optimistic: true
+  qos: 2
+  retain: true
+
+- unique_id: "401ho_R2_Outing"
+  name: "401ho R2 Outing"
+  state_topic: "homenet/401ho_Thermo2/power/state_outing"
+  command_topic: "homenet/401ho_Thermo2/power/command"
+  availability:
+    - topic: "homenet/401ho/LWT"
+      payload_available: "Online"
+      payload_not_available: "Offline"
+#   mode_state_template: >-
+#   { % set modes = {'OFF': 'off', 'ON': 'ON'} %}
+#   {{modes[value] if value in modes.keys() else 'off'}}
+  payload_on: "outing"
+  payload_off: "comeback"
+  state_on: "ON"
+  state_off: "OFF"
+  optimistic: true
+  qos: 2
+  retain: true
+
+- unique_id: "401ho_R3_Outing"
+  name: "401ho R3 Outing"
+  state_topic: "homenet/401ho_Thermo3/power/state_outing"
+  command_topic: "homenet/401ho_Thermo3/power/command"
+  availability:
+    - topic: "homenet/401ho/LWT"
+      payload_available: "Online"
+      payload_not_available: "Offline"
+#   mode_state_template: >-
+#   { % set modes = {'OFF': 'off', 'ON': 'ON'} %}
+#   {{modes[value] if value in modes.keys() else 'off'}}
+  payload_on: "outing"
+  payload_off: "comeback"
+  state_on: "ON"
+  state_off: "OFF"
+  optimistic: true
+  qos: 2
+  retain: true
+
+###
+
 - unique_id: "401ho_Main_Valve"
   name: "401ho Main Valve"
   state_topic: "homenet/401ho_Main/power/state"
@@ -142,7 +203,8 @@ sensor:
 
 climate:
 #103호
-- name: "401ho_R1"
+- unique_id: "401ho_R1"
+  name: "401ho_R1"
   modes:
     - "off"
     - "heat"
@@ -165,7 +227,8 @@ climate:
   qos: 2
   retain: true
   
-- name: "401ho_R2"
+- unique_id: "401ho_R2"
+  name: "401ho_R2"
   modes:
     - "off"
     - "heat"
@@ -188,7 +251,8 @@ climate:
   qos: 2
   retain: true
   
-- name: "401ho_R3"
+- unique_id: "401ho_R3"
+  name: "401ho_R3"
   modes:
     - "off"
     - "heat"
