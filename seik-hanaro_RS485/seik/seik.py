@@ -9,10 +9,10 @@ import socket
 share_dir = '/share'
 config_dir = '/data'
 data_dir = '/seik'
-
+version = 'v1.3.7'
 def log(string):
     date = time.strftime('%Y-%m-%d %p %I:%M:%S', time.localtime(time.time()))
-    print('[{}] {}'.format(date, string))
+    print('{} [{}] {}'.format(version, date, string))
     return
 
 def main(CONFIG, OPTION, device_list):
@@ -45,7 +45,7 @@ def main(CONFIG, OPTION, device_list):
     def make_hex_temp(k, curTemp, setTemp, state):  # 온도조절기 16자리 (8byte) hex 만들기
         log("k = {}, curTemp = {}, setTemp = {}, state = {}".format(k, curTemp, setTemp, state))
 
-        if state == 'OFF' or state == 'ON' or state == 'CHANGE':
+        if state == 'OFF' or state == 'ON' or state == 'CHANGE' or state == 'COMEBACK' or state == 'OUTING':
             tmp_hex = device_list['Thermo'].get('command' + state)
             change = device_list['Thermo'].get('commandNUM')
             tmp_hex = make_hex(k, tmp_hex, change)
@@ -118,7 +118,7 @@ def main(CONFIG, OPTION, device_list):
             cur_state = HOMESTATE.get(key)
             value = 'ON' if value == 'heat' else value.upper()
 
-            log('[DC] device = {}, key = {}, num = {}, idx = {}, cur_state = {}, vlaue = {}'.format(device, key, num, idx, cur_state, value))
+            log('[DC] device = {}, key = {}, num = {}, idx = {}, cur_state = {}, value = {}'.format(device, key, num, idx, cur_state, value))
 
             if cur_state:
                 # PASS
@@ -159,24 +159,6 @@ def main(CONFIG, OPTION, device_list):
                                 else:
                                     log ('[DC] sendcmd = {}'.format(sendcmd))
 
-                    elif device == 'Fan':
-                        if topics[2] == 'power':
-                            sendcmd = DEVICE_LISTS[device][idx].get('command' + value)
-                            recvcmd = DEVICE_LISTS[device][idx].get('state' + value) if value == 'ON' else [
-                                DEVICE_LISTS[device][idx].get('state' + value)]
-                            QUEUE.append({'sendcmd': sendcmd, 'recvcmd': recvcmd, 'count': 0})
-                            if debug:
-                                log('[DEBUG] Queued ::: sendcmd: {}, recvcmd: {}'.format(sendcmd, recvcmd))
-                        elif topics[2] == 'speed':
-                            speed_list = ['LOW', 'MEDIUM', 'HIGH']
-                            if value in speed_list:
-                                index = speed_list.index(value)
-                                sendcmd = DEVICE_LISTS[device][idx]['CHANGE'][index]
-                                recvcmd = [DEVICE_LISTS[device][idx]['stateON'][index]]
-                                QUEUE.append({'sendcmd': sendcmd, 'recvcmd': recvcmd, 'count': 0})
-                                if debug:
-                                    log('[DEBUG] Queued ::: sendcmd: {}, recvcmd: {}'.format(sendcmd, recvcmd))
-
                     else:
                         sendcmd = DEVICE_LISTS[device][idx].get('command' + value)
                         if sendcmd:
@@ -215,14 +197,11 @@ def main(CONFIG, OPTION, device_list):
     async def recv_from_elfin(data):
         COLLECTDATA['LastRecv'] = time.time_ns()
         if data:
-            if HOMESTATE.get('EV1power') == 'ON':
-                if COLLECTDATA['EVtime'] < time.time():
-                    await update_state('EV', 0, 'OFF')
             for que in QUEUE:
                 if data in que['recvcmd']:
                     QUEUE.remove(que)
                     if debug:
-                        log('[DEBUG] Found matched hex: {}. Delete a queue: {}'.format(raw_data, que))
+                        log('[DEBUG] Found matched hex: {}. Delete a queue: {}'.format(data, que))
                     break
 
             device_name = prefix_list.get(data[:2])
@@ -235,38 +214,17 @@ def main(CONFIG, OPTION, device_list):
                 onoffNUM = device_list['Thermo']['stateONOFFNUM']
                 staNUM = device_list['Thermo']['stateNUM']
                 index = int(data[staNUM - 1]) - 1
-                onoff = 'ON' if int(data[onoffNUM - 1]) > 0 else 'OFF'
+                onoff = 'OFF' 
+                outcom = 'OFF'
+                
+                if int(data[onoffNUM - 1]) > 0:
+                    onoff = 'ON'
+                if int(data[onoffNUM - 1]) == 4:
+                    outcom = 'ON'
+
                 await update_state(device_name, index, onoff)
+                await update_outcom(device_name, index, outcom)
                 await update_temperature(index, curT, setT)
-
-            elif device_name == 'Fan':
-                if data in DEVICE_LISTS['Fan'][1]['stateON']:
-                    speed = DEVICE_LISTS['Fan'][1]['stateON'].index(data)
-                    await update_state('Fan', 0, 'ON')
-                    await update_fan(0, speed)
-                elif data == DEVICE_LISTS['Fan'][1]['stateOFF']:
-                    await update_state('Fan', 0, 'OFF')
-                else:
-                    log("[WARNING] <{}> 기기의 신호를 찾음: {}".format(device_name, data))
-                    log('[WARNING] 기기목록에 등록되지 않는 패킷입니다. JSON 파일을 확인하세요..')
-
-            elif device_name == 'Outlet':
-                staNUM = device_list['Outlet']['stateNUM']
-                index = int(data[staNUM - 1]) - 1
-
-                for onoff in ['OFF', 'ON']:
-                    if data.startswith(DEVICE_LISTS[device_name][index + 1]['state' + onoff][:8]):
-                        await update_state(device_name, index, onoff)
-                        if onoff == 'ON':
-                            await update_outlet_value(index, data[10:14])
-                        else:
-                            await update_outlet_value(index, 0)
-
-            elif device_name == 'EV':
-                val = int(data[4:6], 16)
-                await update_state('EV', 0, 'ON')
-                await update_ev_value(0, val)
-                COLLECTDATA['EVtime'] = time.time() + 3
 
             else:
                 num = DEVICE_LISTS[device_name]['Num']
@@ -285,6 +243,14 @@ def main(CONFIG, OPTION, device_list):
         deviceID = device + str(idx + 1)
         key = deviceID + state
 
+        HOMESTATE[key] = onoff
+        topic = STATE_TOPIC.format(tsHo +'_'+ deviceID, state)
+        mqtt_client.publish(topic, onoff.encode())
+
+        if mqtt_log:
+            log('[LOG] ->> HA : {} >> {}'.format(topic, onoff))
+
+        '''
         if onoff != HOMESTATE.get(key):
             HOMESTATE[key] = onoff
             topic = STATE_TOPIC.format(tsHo +'_'+ deviceID, state)
@@ -295,32 +261,22 @@ def main(CONFIG, OPTION, device_list):
         else:
             if debug:
                 log('[DEBUG] {} is already set: {}'.format(deviceID, onoff))
+        '''
         return
 
-    async def update_fan(idx, onoff):
-        deviceID = 'Fan' + str(idx + 1)
-        if onoff == 'ON' or onoff == 'OFF':
-            state = 'power'
-
-        else:
-            try:
-                speed_list = ['low', 'medium', 'high']
-                onoff = speed_list[int(onoff) - 1]
-                state = 'speed'
-            except:
-                return
+    async def update_outcom(device, idx, outcom):
+        state = 'state_outing'
+        deviceID = device + str(idx + 1)
         key = deviceID + state
 
-        if onoff != HOMESTATE.get(key):
-            HOMESTATE[key] = onoff
-            topic = STATE_TOPIC.format(deviceID, state)
-            #mqtt_client.publish(topic, onoff.encode())
-            mqtt_client.publish(topic, onoff.encode(), 2, True)
-            if mqtt_log:
-                log('[LOG] ->> HA : {} >> {}'.format(topic, onoff))
-        else:
-            if debug:
-                log('[DEBUG] {} is already set: {}'.format(deviceID, onoff))
+        HOMESTATE[key] = outcom
+        topic = 'homenet/'+ tsHo +'_'+ deviceID +'/power/state_outing'
+        # mqtt_client.publish(topic, outcom.encode())
+        mqtt_client.publish(topic, outcom.encode(), 2, True)
+
+        if mqtt_log:
+            log('[LOG] ->> HA : {} >> {}'.format(topic, outcom))
+
         return
 
     async def update_temperature(idx, curTemp, setTemp):
@@ -329,6 +285,14 @@ def main(CONFIG, OPTION, device_list):
         for state in temperature:
             key = deviceID + state
             val = temperature[state]
+
+            HOMESTATE[key] = val
+            topic = STATE_TOPIC.format(tsHo +'_'+ deviceID, state)
+            mqtt_client.publish(topic, val.encode())
+            if mqtt_log:
+                log('[LOG] ->> HA : {} -> {}'.format(topic, val))
+
+            '''
             if val != HOMESTATE.get(key):
                 HOMESTATE[key] = val
                 topic = STATE_TOPIC.format(tsHo +'_'+ deviceID, state)
@@ -339,32 +303,8 @@ def main(CONFIG, OPTION, device_list):
             else:
                 if debug:
                     log('[DEBUG] {} is already set: {}'.format(key, val))
+            '''
         return
-
-    async def update_outlet_value(idx, val):
-        deviceID = 'Outlet' + str(idx + 1)
-        try:
-            val = '%.1f' % float(int(val) / 10)
-            topic = STATE_TOPIC.format(deviceID, 'watt')
-            #mqtt_client.publish(topic, val.encode())
-            mqtt_client.publish(topic, val.encode(), 2, True)
-            if debug:
-                log('[LOG] ->> HA : {} -> {}'.format(topic, val))
-        except:
-            pass
-
-    async def update_ev_value(idx, val):
-        deviceID = 'EV' + str(idx + 1)
-        try:
-            BF = device_info['EV']['BasementFloor']
-            val = str(int(val) - BF + 1) if val >= BF else 'B' + str(BF - int(val))
-            topic = STATE_TOPIC.format(deviceID, 'floor')
-            #mqtt_client.publish(topic, val.encode())
-            mqtt_client.publish(topic, val.encode(), 2, True)
-            if debug:
-                log('[LOG] ->> HA : {} -> {}'.format(topic, val))
-        except:
-            pass
 
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
@@ -464,8 +404,10 @@ def main(CONFIG, OPTION, device_list):
                         if send_data['recvcmd'] == 'sync':
                             # 02 01 00 00 00 00 00 03
                             # 82 81 01 25 27 00 00 50 
-                            #     ^ 1이면 ON, 0이면 OFF
+                            #     ^ 0=OFF, 1=ON, 2=외출해제, 4=외출
                             onoff = int(recv[3:4])
+                            outcom = int(recv[3:4])
+
                             dev = int(recv[5:6])
                             curTemp = str(recv[6:8])
                             setTemp = str(recv[8:10])
@@ -475,9 +417,15 @@ def main(CONFIG, OPTION, device_list):
                             else:
                                 onoff = 'ON'
 
-                            log("[DC-sync] dev = {}, onoff = {}, curTemp = {}, setTemp = {}".format(dev, onoff, curTemp, setTemp))
-                            await update_state('Thermo', dev - 1, onoff)
-                            await update_temperature(dev - 1, curTemp, setTemp)
+                            if outcom == 4:
+                                outcom = "ON"
+                            else:
+                                outcom = "OFF"
+
+                            log("[DC-sync] dev = {}, onoff = {}, outcom = {}, curTemp = {}, setTemp = {}".format(dev, onoff, outcom, curTemp, setTemp))
+                            await update_state('Thermo', dev-1, onoff)
+                            await update_outcom('Thermo', dev-1, outcom)
+                            await update_temperature(dev-1, curTemp, setTemp)
 
                         else:
                             await slice_raw_data(recvBytes.hex().upper())
