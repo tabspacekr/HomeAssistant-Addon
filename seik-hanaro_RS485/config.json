@@ -1,6 +1,6 @@
 {
   "name": "SEIK-HANARO RS485 Controller",
-  "version": "1.2.7",
+  "version": "1.3.4",
   "slug": "seik-hanaro_rs485",
   "url": "https://github.com/tabspacekr/HomeAssistant-Addon",
   "description": "MQTT + ELFIN SOCKET 통신을 활용한 세익(SEIK) 하나로(HANARO) 온도조절기 컨트롤러 애드온",
@@ -15,12 +15,9 @@
     "mqtt_log": true,
     "elfin_log": true,
     "save_unregistered_signal": true,
-    "mqtt_server": "192.168.88.xx",
+    "mqtt_server": "192.168.88.5",
     "mqtt_id": "mqtt",
-    "mqtt_password": "!SUPERSTRONGPASSWORD",
-    "elfin_server": "192.168.88.xx",
-    "elfin_id": "admin",
-    "elfin_password": "admin"
+    "mqtt_password": "!SUPERSTRONGPASSWORD"
   },
   "schema": {
     "DEBUG": "bool",
@@ -29,25 +26,6 @@
     "save_unregistered_signal": "bool",
     "mqtt_server": "str",
     "mqtt_id": "str",
-    "mqtt_password": "str",
-    "elfin_server": "str",
-    "elfin_id": "str",
-    "elfin_password": "str",
-    "Number_of_households": "str",
-    "1_ip": "str",
-    "1_lake": "str",
-    "1_valves": "str",
-    "2_ip": "str?",
-    "2_lake": "str?",
-    "2_valves": "str?",
-    "3_ip": "str?",
-    "3_lake": "str?",
-    "3_valves": "str?",
-    "4_ip": "str?",
-    "4_lake": "str?",
-    "4_valves": "str?",
-    "5_ip": "str?",
-    "5_lake": "str?",
-    "5_valves": "str?"
+    "mqtt_password": "str"
   }
 }
