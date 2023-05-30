@@ -9,7 +9,7 @@ import socket
 share_dir = '/share'
 config_dir = '/data'
 data_dir = '/seik'
-version = 'v1.4.19'
+version = 'v1.4.20'
 
 def log(string):
     date = time.strftime('%Y-%m-%d %p %I:%M:%S', time.localtime(time.time()))
@@ -522,8 +522,8 @@ def main(CONFIG, OPTION, device_list):
     log("[DC] mqtt_id = " + tsMqttId)
     log("[DC] mqtt_pw = " + tsMqttPw)
 
-    #mqtt_client = mqtt.Client(tsHo + "-mqtt")
-    mqtt_client = mqtt.Client(tsHo)
+    mqtt_client = mqtt.Client(tsHo + "-mqtt")
+    #mqtt_client = mqtt.Client(tsHo)
     mqtt_client.username_pw_set(tsMqttId, tsMqttPw)
     mqtt_client.user_data_set(tsHo)
     mqtt_client.on_connect = on_connect
