@@ -9,7 +9,7 @@ import socket
 share_dir = '/share'
 config_dir = '/data'
 data_dir = '/seik'
-version = 'v1.4.0'
+version = 'v1.4.1'
 
 def log(string):
     date = time.strftime('%Y-%m-%d %p %I:%M:%S', time.localtime(time.time()))
@@ -57,7 +57,7 @@ def main(CONFIG, OPTION, device_list):
                 tmp_hex = tmp_hex[:chaTnum - 1] + setT + tmp_hex[chaTnum + 1:]
 
             return checksum(tmp_hex)
-        
+
         else:
             tmp_hex = device_list['Thermo'].get(state)
             change = device_list['Thermo'].get('stateNUM')
@@ -255,8 +255,8 @@ def main(CONFIG, OPTION, device_list):
         if onoff != HOMESTATE.get(key):
             HOMESTATE[key] = onoff
             topic = STATE_TOPIC.format(tsHo +'_'+ deviceID, state)
-            #mqtt_client.publish(topic, onoff.encode())
-            mqtt_client.publish(topic, onoff.encode(), 2, True)
+            mqtt_client.publish(topic, onoff.encode())
+            #mqtt_client.publish(topic, onoff.encode(), 2, True)
             if mqtt_log:
                 log('[LOG] ->> HA : {} >> {}'.format(topic, onoff))
         else:
@@ -272,8 +272,8 @@ def main(CONFIG, OPTION, device_list):
 
         HOMESTATE[key] = outcom
         topic = 'homenet/'+ tsHo +'_'+ deviceID +'/power/state_outing'
-        # mqtt_client.publish(topic, outcom.encode())
-        mqtt_client.publish(topic, outcom.encode(), 2, True)
+        mqtt_client.publish(topic, outcom.encode())
+        #mqtt_client.publish(topic, outcom.encode(), 2, True)
 
         if mqtt_log:
             log('[LOG] ->> HA : {} >> {}'.format(topic, outcom))
@@ -297,8 +297,8 @@ def main(CONFIG, OPTION, device_list):
             if val != HOMESTATE.get(key):
                 HOMESTATE[key] = val
                 topic = STATE_TOPIC.format(tsHo +'_'+ deviceID, state)
-                #mqtt_client.publish(topic, val.encode())
-                mqtt_client.publish(topic, val.encode(), 2, True)
+                mqtt_client.publish(topic, val.encode())
+                #mqtt_client.publish(topic, val.encode(), 2, True)
                 if mqtt_log:
                     log('[LOG] ->> HA : {} -> {}'.format(topic, val))
             else:
@@ -382,8 +382,8 @@ def main(CONFIG, OPTION, device_list):
                         recvBytes = None
 
                         # MQTT에 전송
-                        #mqtt_client.publish(ELFIN_SEND_TOPIC, sendBytes)
-                        mqtt_client.publish(ELFIN_SEND_TOPIC, sendBytes, 1)
+                        mqtt_client.publish(ELFIN_SEND_TOPIC, sendBytes)
+                        #mqtt_client.publish(ELFIN_SEND_TOPIC, sendBytes, 1)
                         #await asyncio.sleep(0.01)
 
                         # 소켓으로 전송
