@@ -15,7 +15,7 @@
     "mqtt_log": true,
     "elfin_log": true,
     "save_unregistered_signal": true,
-    "mqtt_server": "192.168.88.5",
+    "mqtt_server": "192.168.88.11",
     "mqtt_id": "mqtt",
     "mqtt_password": "!SUPERSTRONGPASSWORD"
   },
