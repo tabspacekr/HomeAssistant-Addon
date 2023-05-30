@@ -9,7 +9,7 @@ import socket
 share_dir = '/share'
 config_dir = '/data'
 data_dir = '/seik'
-version = 'v1.4.10'
+version = 'v1.4.11'
 
 def log(string):
     date = time.strftime('%Y-%m-%d %p %I:%M:%S', time.localtime(time.time()))
@@ -433,7 +433,7 @@ def main(CONFIG, OPTION, device_list):
 
                         # 재시도 횟수
                         #TRYCNT = 1
-                        TRYCNT = 3
+                        TRYCNT = 5
                         if send_data['count'] < TRYCNT:
                             send_data['count'] = send_data['count'] + 1
                             QUEUE.append(send_data)
@@ -528,34 +528,34 @@ def main(CONFIG, OPTION, device_list):
     mqtt_client.on_connect = on_connect
     mqtt_client.on_message = on_message
     #mqtt_client.connect_async(host=tsMqttIp, keepalive=0)
-    mqtt_client.connect_async(host=tsMqttIp)
+    mqtt_client.connect_async(tsMqttIp)
     mqtt_client.loop_start()
 
-    # 동기화 스레드 생성
-    thread = threading.Thread(target=updateSync)
-    thread.start()
+    # # 동기화 스레드 생성
+    # thread = threading.Thread(target=updateSync)
+    # thread.start()
 
-    #loop = asyncio.get_event_loop()
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(send_to_elfin())
+    # #loop = asyncio.get_event_loop()
+    # loop = asyncio.new_event_loop()
+    # asyncio.set_event_loop(loop)
+    # loop.run_until_complete(send_to_elfin())
 
-    log("end do_work")
+    # log("end do_work")
 
-    loop.close()
+    # loop.close()
 
-    # # 동기화 스레드 생성 (무한루프)
-    # isSyncLoop = True
-    # while isSyncLoop:
-    #     log("[DC] Run - updateSync")
-    #     thread = threading.Thread(target=updateSync)
-    #     thread.start()
-    #     syncLoop = asyncio.new_event_loop()
-    #     asyncio.set_event_loop(syncLoop)
-    #     syncLoop.run_until_complete(send_to_elfin())
-    #     syncLoop.close()
-    #     log("[DC] End - updateSync")
-    #     time.sleep(10) # 10초후에 재시작
+    # 동기화 스레드 생성 (무한루프)
+    isSyncLoop = True
+    while isSyncLoop:
+        log("[DC] Run - updateSync")
+        thread = threading.Thread(target=updateSync)
+        thread.start()
+        syncLoop = asyncio.new_event_loop()
+        asyncio.set_event_loop(syncLoop)
+        syncLoop.run_until_complete(send_to_elfin())
+        syncLoop.close()
+        log("[DC] End - updateSync")
+        time.sleep(10) # 10초후에 재시작
     
 
     mqtt_client.loop_stop()
