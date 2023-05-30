@@ -433,7 +433,7 @@ def main(CONFIG, OPTION, device_list):
 
                         # 재시도 횟수
                         #TRYCNT = 1
-                        TRYCNT = 0
+                        TRYCNT = 3
                         if send_data['count'] < TRYCNT:
                             send_data['count'] = send_data['count'] + 1
                             QUEUE.append(send_data)
