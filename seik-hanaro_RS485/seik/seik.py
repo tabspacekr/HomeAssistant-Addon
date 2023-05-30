@@ -9,7 +9,7 @@ import socket
 share_dir = '/share'
 config_dir = '/data'
 data_dir = '/seik'
-version = 'v1.4.7.1'
+version = 'v1.4.8'
 
 def log(string):
     date = time.strftime('%Y-%m-%d %p %I:%M:%S', time.localtime(time.time()))
@@ -527,7 +527,7 @@ def main(CONFIG, OPTION, device_list):
     mqtt_client.user_data_set(tsHo)
     mqtt_client.on_connect = on_connect
     mqtt_client.on_message = on_message
-    mqtt_client.connect_async(host=tsMqttIp, port=1883, keepalive=0, bind_address="")
+    mqtt_client.connect_async(host=tsMqttIp, keepalive=0)
     mqtt_client.loop_start()
 
     # # 동기화 스레드 생성
