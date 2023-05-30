@@ -1,6 +1,6 @@
 {
   "name": "SEIK-HANARO RS485 Controller",
-  "version": "1.4.13",
+  "version": "1.4.14",
   "slug": "seik-hanaro_rs485",
   "url": "https://github.com/tabspacekr/HomeAssistant-Addon",
   "description": "MQTT + ELFIN SOCKET 통신을 활용한 세익(SEIK) 하나로(HANARO) 온도조절기 컨트롤러 애드온",
